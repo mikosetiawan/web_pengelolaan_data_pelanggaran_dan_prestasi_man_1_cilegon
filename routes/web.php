@@ -83,14 +83,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [CounselingController::class, 'destroy'])->name('counseling.destroy');
     });
 
-    // Grade routes
+   // Grade routes
     Route::prefix('grade')->group(function () {
         Route::get('/', [GradeController::class, 'index'])->name('grade.index');
         Route::post('/', [GradeController::class, 'store'])->name('grade.store');
         Route::put('/{id}', [GradeController::class, 'update'])->name('grade.update');
         Route::delete('/{id}', [GradeController::class, 'destroy'])->name('grade.destroy');
         Route::get('/report', [GradeController::class, 'report'])->name('grade.report');
+        Route::get('/ranking', [GradeController::class, 'rankingReport'])->name('grade.ranking');
     });
+    
 });
 
 require __DIR__ . '/auth.php';

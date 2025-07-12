@@ -225,4 +225,67 @@ class GradeController extends Controller
             return redirect()->route('dashboard')->with('error', 'Gagal menghasilkan laporan: ' . $e->getMessage());
         }
     }
+
+
+     public function rankingReport()
+    {
+        // Fetch students with their grades for semesters 1-5
+        $students = Student::with(['grades' => function ($query) {
+            $query->whereIn('semester', [1, 2, 3, 4, 5]);
+        }])->get();
+
+        // Initialize arrays for MIPA and IPS rankings
+        $mipaRankings = [];
+        $ipsRankings = [];
+
+        foreach ($students as $student) {
+            // Calculate average grade for semesters 1-5
+            $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
+            $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
+
+            if ($averageGrade > 0) {
+                $rankingData = [
+                    'student_id' => $student->id,
+                    'nis' => $student->nis,
+                    'name' => $student->name,
+                    'class' => $student->class,
+                    'major' => $grades->first()->major ?? 'Unknown',
+                    'average_grade' => round($averageGrade, 2),
+                ];
+
+                // Group by major
+                if (strtoupper($rankingData['major']) == 'MIPA') {
+                    $mipaRankings[] = $rankingData;
+                } elseif (strtoupper($rankingData['major']) == 'IPS') {
+                    $ipsRankings[] = $rankingData;
+                }
+            }
+        }
+
+        // Sort rankings by average grade in descending order
+        usort($mipaRankings, function ($a, $b) {
+            return $b['average_grade'] <=> $a['average_grade'];
+        });
+
+        usort($ipsRankings, function ($a, $b) {
+            return $b['average_grade'] <=> $a['average_grade'];
+        });
+
+        // Add rank numbers
+        foreach ($mipaRankings as $index => &$ranking) {
+            $ranking['rank'] = $index + 1;
+        }
+
+        foreach ($ipsRankings as $index => &$ranking) {
+            $ranking['rank'] = $index + 1;
+        }
+
+        return view('pages.grade.ranking', [
+            'title' => 'Academic Ranking Report',
+            'mipaRankings' => $mipaRankings,
+            'ipsRankings' => $ipsRankings,
+        ]);
+    }
+
+
 }

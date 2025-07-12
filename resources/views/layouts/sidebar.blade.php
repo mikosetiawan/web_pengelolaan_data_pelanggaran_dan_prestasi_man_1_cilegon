@@ -115,6 +115,10 @@
                          <span class="menu-title">Report SPO</span>
                          <i class="bi bi-sticky-fill menu-icon"></i>
                      </a>
+                     <a class="nav-link" href="{{ route('grade.ranking') }}">
+                         <span class="menu-title">Report Prestasi Ranking</span>
+                         <i class="bi bi-sticky-fill menu-icon"></i>
+                     </a>
                  </li>
              @endif
          </ul>
