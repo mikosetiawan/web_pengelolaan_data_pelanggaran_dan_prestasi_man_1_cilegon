@@ -254,7 +254,7 @@ class GradeController extends Controller
                 ];
 
                 // Group by major
-                if (strtoupper($rankingData['major']) == 'MIPA') {
+                if (strtoupper($rankingData['major']) == 'IPA') {
                     $mipaRankings[] = $rankingData;
                 } elseif (strtoupper($rankingData['major']) == 'IPS') {
                     $ipsRankings[] = $rankingData;
