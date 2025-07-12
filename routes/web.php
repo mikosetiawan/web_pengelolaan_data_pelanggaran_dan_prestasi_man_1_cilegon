@@ -16,6 +16,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
+// Public routes
+Route::prefix('spo')->group(function () {
+    Route::get('/public/spo', [SPOController::class, 'index2'])->name('spo.index2');
+    Route::get('/{id}/view-detail-public', [SPOController::class, 'viewDetail2'])->name('spo.view-detail2');
+    Route::get('/report/{id}', [SPOController::class, 'report2'])->name('spo.report2');
+});
+
+
 // Dashboard routes
 Route::prefix('dashboard')
     ->middleware(['auth', 'verified'])
@@ -83,7 +92,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [CounselingController::class, 'destroy'])->name('counseling.destroy');
     });
 
-   // Grade routes
+    // Grade routes
     Route::prefix('grade')->group(function () {
         Route::get('/', [GradeController::class, 'index'])->name('grade.index');
         Route::post('/', [GradeController::class, 'store'])->name('grade.store');
@@ -92,7 +101,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/report', [GradeController::class, 'report'])->name('grade.report');
         Route::get('/ranking', [GradeController::class, 'rankingReport'])->name('grade.ranking');
     });
-    
 });
 
 require __DIR__ . '/auth.php';

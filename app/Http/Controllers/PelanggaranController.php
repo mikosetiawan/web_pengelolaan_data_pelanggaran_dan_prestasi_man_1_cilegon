@@ -197,7 +197,7 @@ class PelanggaranController extends Controller
 
                 // Send WhatsApp notification to test number
                 $testNumber = 'whatsapp:+6285779178942';
-                $message = "Assalamualaikum, informasi terkait nama siswa: {$student->name}, pelanggaran: {$violation->nama_pelanggaran}, skor: {$newPoints}, dikenakan SPO {$spoLevel} pada tanggal " . Carbon::tomorrow()->format('d F Y') . " pukul 08:00 WIB di MAN 1 Kota Cilegon.";
+                $message = "Assalamualaikum, informasi terkait nama siswa: {$student->name}, pelanggaran: {$violation->nama_pelanggaran}, skor: {$newPoints}, dikenakan SPO {$spoLevel} pada tanggal " . Carbon::tomorrow()->format('d F Y') . " pukul 08:00 WIB di MAN 1 Kota Cilegon. Silahkan dicek di url :" . route('spo.index2');
                 $this->sendWhatsAppNotification($testNumber, $message);
 
                 // Previous notification logic (commented out)
