@@ -100,6 +100,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [GradeController::class, 'destroy'])->name('grade.destroy');
         Route::get('/report', [GradeController::class, 'report'])->name('grade.report');
         Route::get('/ranking', [GradeController::class, 'rankingReport'])->name('grade.ranking');
+
+        Route::get('/grade/mipa-ranking-pdf', [GradeController::class, 'downloadMipaRankingPdf'])->name('grade.mipa_ranking_pdf');
+        Route::get('/grade/ips-ranking-pdf', [GradeController::class, 'downloadIpsRankingPdf'])->name('grade.ips_ranking_pdf');
     });
 });
 

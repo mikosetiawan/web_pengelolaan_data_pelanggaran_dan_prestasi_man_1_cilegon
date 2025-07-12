@@ -10,6 +10,7 @@
 
                             <!-- MIPA Ranking Table -->
                             <h5>MIPA Major</h5>
+                            <a href="{{ route('grade.mipa_ranking_pdf') }}" class="btn btn-primary mb-3">Download MIPA PDF</a>
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
@@ -32,8 +33,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5" class="text-center">No data available for MIPA
-                                                </td>
+                                                <td colspan="5" class="text-center">No data available for MIPA</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -42,6 +42,7 @@
 
                             <!-- IPS Ranking Table -->
                             <h5 class="mt-5">IPS Major</h5>
+                            <a href="{{ route('grade.ips_ranking_pdf') }}" class="btn btn-primary mb-3">Download IPS PDF</a>
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
@@ -64,8 +65,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5" class="text-center">No data available for IPS
-                                                </td>
+                                                <td colspan="5" class="text-center">No data available for IPS</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

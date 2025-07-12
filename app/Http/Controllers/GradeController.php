@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Grade;
 use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -227,65 +228,246 @@ class GradeController extends Controller
     }
 
 
-     public function rankingReport()
+    // public function rankingReport()
+    // {
+    //     // Fetch students with their grades for semesters 1-5
+    //     $students = Student::with([
+    //         'grades' => function ($query) {
+    //             $query->whereIn('semester', [1, 2, 3, 4, 5]);
+    //         }
+    //     ])->get();
+
+    //     // Initialize arrays for MIPA and IPS rankings
+    //     $mipaRankings = [];
+    //     $ipsRankings = [];
+
+    //     foreach ($students as $student) {
+    //         // Calculate average grade for semesters 1-5
+    //         $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
+    //         $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
+
+    //         if ($averageGrade > 0) {
+    //             $rankingData = [
+    //                 'student_id' => $student->id,
+    //                 'nis' => $student->nis,
+    //                 'name' => $student->name,
+    //                 'class' => $student->class,
+    //                 'major' => $grades->first()->major ?? 'Unknown',
+    //                 'average_grade' => round($averageGrade, 2),
+    //             ];
+
+    //             // Group by major
+    //             if (strtoupper($rankingData['major']) == 'IPA') {
+    //                 $mipaRankings[] = $rankingData;
+    //             } elseif (strtoupper($rankingData['major']) == 'IPS') {
+    //                 $ipsRankings[] = $rankingData;
+    //             }
+    //         }
+    //     }
+
+    //     // Sort rankings by average grade in descending order
+    //     usort($mipaRankings, function ($a, $b) {
+    //         return $b['average_grade'] <=> $a['average_grade'];
+    //     });
+
+    //     usort($ipsRankings, function ($a, $b) {
+    //         return $b['average_grade'] <=> $a['average_grade'];
+    //     });
+
+    //     // Add rank numbers
+    //     foreach ($mipaRankings as $index => &$ranking) {
+    //         $ranking['rank'] = $index + 1;
+    //     }
+
+    //     foreach ($ipsRankings as $index => &$ranking) {
+    //         $ranking['rank'] = $index + 1;
+    //     }
+
+    //     return view('pages.grade.ranking', [
+    //         'title' => 'Academic Ranking Report',
+    //         'mipaRankings' => $mipaRankings,
+    //         'ipsRankings' => $ipsRankings,
+    //     ]);
+    // }
+
+
+
+
+    public function rankingReport()
     {
-        // Fetch students with their grades for semesters 1-5
-        $students = Student::with(['grades' => function ($query) {
-            $query->whereIn('semester', [1, 2, 3, 4, 5]);
-        }])->get();
+        if (!Auth::check() || !in_array(Auth::user()->role, ['wali kelas', 'admin'])) {
+            return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki izin untuk melihat laporan.');
+        }
 
-        // Initialize arrays for MIPA and IPS rankings
-        $mipaRankings = [];
-        $ipsRankings = [];
+        try {
+            // Fetch students with their grades for semesters 1-5
+            $students = Student::with(['grades' => function ($query) {
+                $query->whereIn('semester', [1, 2, 3, 4, 5]);
+            }])->where('status', 'active')->get();
 
-        foreach ($students as $student) {
-            // Calculate average grade for semesters 1-5
-            $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
-            $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
+            // Initialize arrays for MIPA and IPS rankings
+            $mipaRankings = [];
+            $ipsRankings = [];
 
-            if ($averageGrade > 0) {
-                $rankingData = [
-                    'student_id' => $student->id,
-                    'nis' => $student->nis,
-                    'name' => $student->name,
-                    'class' => $student->class,
-                    'major' => $grades->first()->major ?? 'Unknown',
-                    'average_grade' => round($averageGrade, 2),
-                ];
+            foreach ($students as $student) {
+                // Calculate average grade for semesters 1-5
+                $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
+                $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
 
-                // Group by major
-                if (strtoupper($rankingData['major']) == 'IPA') {
-                    $mipaRankings[] = $rankingData;
-                } elseif (strtoupper($rankingData['major']) == 'IPS') {
-                    $ipsRankings[] = $rankingData;
+                if ($averageGrade > 0) {
+                    $rankingData = [
+                        'student_id' => $student->id,
+                        'nis' => $student->nis,
+                        'name' => $student->name,
+                        'class' => $student->class,
+                        'major' => $grades->first()->major ?? 'Unknown',
+                        'average_grade' => round($averageGrade, 2),
+                    ];
+
+                    // Group by major
+                    if (strtoupper($rankingData['major']) == 'IPA') {
+                        $mipaRankings[] = $rankingData;
+                    } elseif (strtoupper($rankingData['major']) == 'IPS') {
+                        $ipsRankings[] = $rankingData;
+                    }
                 }
             }
+
+            // Sort rankings by average grade in descending order
+            usort($mipaRankings, function ($a, $b) {
+                return $b['average_grade'] <=> $a['average_grade'];
+            });
+
+            usort($ipsRankings, function ($a, $b) {
+                return $b['average_grade'] <=> $a['average_grade'];
+            });
+
+            // Add rank numbers
+            foreach ($mipaRankings as $index => &$ranking) {
+                $ranking['rank'] = $index + 1;
+            }
+
+            foreach ($ipsRankings as $index => &$ranking) {
+                $ranking['rank'] = $index + 1;
+            }
+
+            return view('pages.grade.ranking', [
+                'title' => 'Academic Ranking Report',
+                'mipaRankings' => $mipaRankings,
+                'ipsRankings' => $ipsRankings,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to generate ranking report: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('dashboard')->with('error', 'Gagal menghasilkan laporan: ' . $e->getMessage());
         }
-
-        // Sort rankings by average grade in descending order
-        usort($mipaRankings, function ($a, $b) {
-            return $b['average_grade'] <=> $a['average_grade'];
-        });
-
-        usort($ipsRankings, function ($a, $b) {
-            return $b['average_grade'] <=> $a['average_grade'];
-        });
-
-        // Add rank numbers
-        foreach ($mipaRankings as $index => &$ranking) {
-            $ranking['rank'] = $index + 1;
-        }
-
-        foreach ($ipsRankings as $index => &$ranking) {
-            $ranking['rank'] = $index + 1;
-        }
-
-        return view('pages.grade.ranking', [
-            'title' => 'Academic Ranking Report',
-            'mipaRankings' => $mipaRankings,
-            'ipsRankings' => $ipsRankings,
-        ]);
     }
 
+    public function downloadMipaRankingPdf()
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['wali kelas', 'admin'])) {
+            return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki izin untuk mengunduh laporan.');
+        }
+
+        try {
+            // Fetch MIPA rankings (same logic as rankingReport)
+            $students = Student::with(['grades' => function ($query) {
+                $query->whereIn('semester', [1, 2, 3, 4, 5]);
+            }])->where('status', 'active')->get();
+
+            $mipaRankings = [];
+            foreach ($students as $student) {
+                $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
+                $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
+
+                if ($averageGrade > 0 && strtoupper($grades->first()->major ?? '') == 'IPA') {
+                    $mipaRankings[] = [
+                        'student_id' => $student->id,
+                        'nis' => $student->nis,
+                        'name' => $student->name,
+                        'class' => $student->class,
+                        'major' => $grades->first()->major,
+                        'average_grade' => round($averageGrade, 2),
+                    ];
+                }
+            }
+
+            // Sort and add rank
+            usort($mipaRankings, function ($a, $b) {
+                return $b['average_grade'] <=> $a['average_grade'];
+            });
+
+            foreach ($mipaRankings as $index => &$ranking) {
+                $ranking['rank'] = $index + 1;
+            }
+
+            // Load view for MIPA PDF
+            $pdf = Pdf::loadView('pages.grade.mipa_ranking_pdf', [
+                'mipaRankings' => $mipaRankings,
+                'title' => 'MIPA Academic Ranking Report'
+            ]);
+
+            return $pdf->download('mipa_ranking_report.pdf');
+        } catch (\Exception $e) {
+            Log::error('Failed to generate MIPA PDF: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('dashboard')->with('error', 'Gagal menghasilkan PDF MIPA: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadIpsRankingPdf()
+    {
+        if (!Auth::check() || !in_array(Auth::user()->role, ['wali kelas', 'admin'])) {
+            return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki izin untuk mengunduh laporan.');
+        }
+
+        try {
+            // Fetch IPS rankings (same logic as rankingReport)
+            $students = Student::with(['grades' => function ($query) {
+                $query->whereIn('semester', [1, 2, 3, 4, 5]);
+            }])->where('status', 'active')->get();
+
+            $ipsRankings = [];
+            foreach ($students as $student) {
+                $grades = $student->grades->whereIn('semester', [1, 2, 3, 4, 5]);
+                $averageGrade = $grades->isNotEmpty() ? $grades->avg('average_grade') : 0;
+
+                if ($averageGrade > 0 && strtoupper($grades->first()->major ?? '') == 'IPS') {
+                    $ipsRankings[] = [
+                        'student_id' => $student->id,
+                        'nis' => $student->nis,
+                        'name' => $student->name,
+                        'class' => $student->class,
+                        'major' => $grades->first()->major,
+                        'average_grade' => round($averageGrade, 2),
+                    ];
+                }
+            }
+
+            // Sort and add rank
+            usort($ipsRankings, function ($a, $b) {
+                return $b['average_grade'] <=> $a['average_grade'];
+            });
+
+            foreach ($ipsRankings as $index => &$ranking) {
+                $ranking['rank'] = $index + 1;
+            }
+
+            // Load view for IPS PDF
+            $pdf = Pdf::loadView('pages.grade.ips_ranking_pdf', [
+                'ipsRankings' => $ipsRankings,
+                'title' => 'IPS Academic Ranking Report'
+            ]);
+
+            return $pdf->download('ips_ranking_report.pdf');
+        } catch (\Exception $e) {
+            Log::error('Failed to generate IPS PDF: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('dashboard')->with('error', 'Gagal menghasilkan PDF IPS: ' . $e->getMessage());
+        }
+    }
 
 }
